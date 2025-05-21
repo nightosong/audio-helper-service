@@ -1,6 +1,7 @@
 .venv
 .pytest_cache
 .cache/*
+!.cache/.gitkeep
 logs/*.log
 __pycache__
 */__pycache__
