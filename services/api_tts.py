@@ -1,17 +1,16 @@
-import asyncio
-import uvicorn
-import multiprocessing as mp
+import os
+import json
 import numpy as np
-from typing import Optional, Literal
+from typing import Optional
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, APIRouter, Body, HTTPException
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi.responses import Response, StreamingResponse
 from flashtts import AsyncMega3Engine
 from flashtts.server.protocol import OpenAISpeechRequest
 from flashtts.server.utils.audio_writer import StreamingAudioWriter
 
-
+router = APIRouter(prefix="/api/tts")
 engine: AsyncMega3Engine = None
 
 
@@ -26,34 +25,34 @@ class SpeechRequest(OpenAISpeechRequest):
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # 检查模型缓存
+    tts_model_path = os.getenv("TTS_MODEL_PATH", ".cache/checkpoints")
+    if not os.path.exists(tts_model_path):
+        os.makedirs(tts_model_path, exist_ok=True)
+        from modelscope import snapshot_download
+
+        snapshot_download("ByteDance/MegaTTS3", local_dir=tts_model_path)
+    # 初始化引擎
     global engine
     engine = AsyncMega3Engine(
-        model_path="checkpoints",
+        model_path=tts_model_path,
         llm_device="cuda",
+        llm_batch_size=os.getenv("TTS_BATCH_SIZE", 8),
         tokenizer_device="cuda",
         backend="vllm",
-        torch_dtype="float16",
+        torch_dtype=os.getenv("TTS_TORCH_DTYPE", "auto"),
     )
-    await engine.add_speaker(
-        name="男",
-        audio=(
-            "data/mega-roles/太乙真人/太乙真人.wav",
-            "data/mega-roles/太乙真人/太乙真人.npy",
-        ),
-    )
-    await engine.add_speaker(
-        name="女",
-        audio=(
-            "data/mega-roles/御姐/御姐配音.wav",
-            "data/mega-roles/御姐/御姐配音.npy",
-        ),
-    )
-    print("starting......")
+    # 加载角色
+    if os.path.exists("data/mega-roles.json"):
+        with open("data/mega-roles.json", "r", encoding="utf-8") as f:
+            roles: list = json.load(f)
+            for info in roles:
+                await engine.add_speaker(
+                    name=info["name"],
+                    audio=tuple(info["audio"]),
+                )
     yield
     engine.shutdown()
-
-
-router = APIRouter(prefix="/api/tts")
 
 
 def generate_audio(audio: np.ndarray, writer: StreamingAudioWriter):
@@ -101,7 +100,7 @@ async def generate_audio_stream(generator, data, writer: StreamingAudioWriter):
 
 @router.post("/g2p")
 async def g2p_api(request: TextRequest):
-    result = await engine._generate(  # 如果有公开 g2p 接口更好
+    result = await engine._generate(
         request.text,
         temperature=0.9,
         top_k=50,

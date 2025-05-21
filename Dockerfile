@@ -13,13 +13,13 @@ RUN apt-get update && apt-get install -y \
     python3.10-distutils \
     && ln -sf /usr/bin/python3.10 /usr/bin/python3
 
-# RUN mkdir -p /root/.pip && \
-#     echo "[global]" > /root/.pip/pip.conf && \
-#     echo "index-url = https://pypi.tuna.tsinghua.edu.cn/simple" >> /root/.pip/pip.conf
+RUN mkdir -p /root/.pip && \
+    echo "[global]" > /root/.pip/pip.conf && \
+    echo "index-url = https://pypi.tuna.tsinghua.edu.cn/simple" >> /root/.pip/pip.conf
 
-# RUN wget https://bootstrap.pypa.io/get-pip.py -O get-pip.py && \
-#     python3 get-pip.py && \
-#     rm get-pip.py
+RUN wget https://bootstrap.pypa.io/get-pip.py -O get-pip.py && \
+    python3 get-pip.py && \
+    rm get-pip.py
 
 COPY requirements.txt /app/
 

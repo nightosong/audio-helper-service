@@ -1,0 +1,16 @@
+[
+    {
+        "name": "男",
+        "audio": [
+            "data/mega-roles/太乙真人/太乙真人.wav",
+            "data/mega-roles/太乙真人/太乙真人.npy"
+        ]
+    },
+    {
+        "name": "女",
+        "audio": [
+            "data/mega-roles/御姐/御姐配音.wav",
+            "data/mega-roles/御姐/御姐配音.npy"
+        ]
+    }
+]

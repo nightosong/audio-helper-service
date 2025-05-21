@@ -1,12 +1,26 @@
+import os
 import io
 import soundfile
+from contextlib import asynccontextmanager
 from threading import Lock
-from fastapi import APIRouter, Form, UploadFile, BackgroundTasks
+from fastapi import FastAPI, APIRouter, Form, UploadFile, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api/asr")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # 检查模型缓存
+    asr_model_path = os.getenv("MODELSCOPE_CACHE", ".cache/modelscope/hub")
+    if not os.path.exists(asr_model_path):
+        os.makedirs(asr_model_path, exist_ok=True)
+        from modelscope import snapshot_download
+
+        snapshot_download("iic/SenseVoiceSmall")
+    yield
 
 
 class ASRModelManager:
