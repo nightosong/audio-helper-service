@@ -1,0 +1,22 @@
+services:
+  audio-helper-service:
+    build: .
+    image: audio-helper:latest
+    restart: always
+    container_name: audio-helper-service
+    volumes:
+      - /root/.cache:/app/.cache
+      - /home/docker-models/checkpoints:/app/checkpoints
+      - /home/docker-models/asset:/app/asset
+    environment:
+      - PYTHONUNBUFFERED=true
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [ gpu ]
+    ports:
+      - "7500:7500"
+    command: >
+      gunicorn main:app -k uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:7500

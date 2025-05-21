@@ -1,0 +1,9 @@
+fastapi==0.115.12
+flashtts==0.1.7
+funasr==1.2.6
+gunicorn==23.0.0
+python-multipart==0.0.20
+torch==2.3.0
+torchaudio==2.3.0
+uvicorn==0.34.2
+vllm==0.5.1
