@@ -20,6 +20,7 @@ async def lifespan(_: FastAPI):
         from modelscope import snapshot_download
 
         snapshot_download("iic/SenseVoiceSmall")
+        snapshot_download("iic/speech_fsmn_vad_zh-cn-16k-common-pytorch")
     yield
 
 
@@ -121,4 +122,4 @@ async def transcribe(
         return StreamingResponse(stream_results())
     else:
         result = await non_streaming_transcribe(model, audio_input, lang)
-        return {"status": "completed", "transcription": result}
+        return {"status": "completed", "text": result}

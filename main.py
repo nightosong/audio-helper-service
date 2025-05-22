@@ -1,5 +1,7 @@
+import os
 import argparse
 import multiprocessing as mp
+from typing import Dict, Tuple, Callable
 from contextlib import asynccontextmanager, AsyncExitStack
 from dotenv import load_dotenv
 
@@ -12,19 +14,25 @@ from services.api_tts import router as tts_router, lifespan as tts_lifespan
 
 mp.set_start_method("spawn", force=True)
 
+ModuleMap: Dict[str, Tuple[Callable, Callable]] = {
+    "asr": (asr_router, asr_lifespan),
+    "tts": (tts_router, tts_lifespan),
+}
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     nacos_register()
     async with AsyncExitStack() as stack:
-        await stack.enter_async_context(asr_lifespan(app))
-        await stack.enter_async_context(tts_lifespan(app))
+        for key in os.getenv("API_SUPPORT_LIST", "").split(","):
+            if key in ModuleMap:
+                router, lifespan = ModuleMap[key]
+                app.include_router(router)
+                await stack.enter_async_context(lifespan(app))
         yield
 
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(asr_router)
-app.include_router(tts_router)
 
 
 if __name__ == "__main__":

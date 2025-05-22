@@ -37,8 +37,9 @@ async def lifespan(_: FastAPI):
     engine = AsyncMega3Engine(
         model_path=os.getenv("TTS_MODEL_PATH", ".cache/checkpoints"),
         llm_device="cuda",
-        llm_batch_size=int(os.getenv("TTS_BATCH_SIZE", 8)),
+        llm_batch_size=int(os.getenv("TTS_LLM_BATCH_SIZE", 8)),
         llm_gpu_memory_utilization=float(os.getenv("TTS_GPU_MEMORY_UTILIZATION", 0.6)),
+        batch_size=int(os.getenv("TTS_BATCH_SIZE", 1)),
         tokenizer_device="cuda",
         backend="vllm",
         torch_dtype=os.getenv("TTS_TORCH_DTYPE", "auto"),
@@ -53,7 +54,8 @@ async def lifespan(_: FastAPI):
                     audio=tuple(info["audio"]),
                 )
     yield
-    engine.shutdown()
+    if hasattr(engine, "generator"):
+        engine.shutdown()
 
 
 def generate_audio(audio: np.ndarray, writer: StreamingAudioWriter):
