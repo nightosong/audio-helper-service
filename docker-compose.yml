@@ -6,8 +6,6 @@ services:
     container_name: audio-helper-service
     volumes:
       - /root/.cache:/app/.cache
-      - /home/docker-models/checkpoints:/app/checkpoints
-      - /home/docker-models/asset:/app/asset
     environment:
       - PYTHONUNBUFFERED=true
       - NVIDIA_VISIBLE_DEVICES=all
